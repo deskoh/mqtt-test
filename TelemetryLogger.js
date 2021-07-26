@@ -21,19 +21,20 @@ class TelemetryLogger {
         e.updated = moment(e.timestamp).fromNow()
       })
       console.clear()
-      console.table(stats, ['lat', 'lng', 'alt', 'v', 'a', 'head', 'bear', 'hdop', 'vdop', 'rol', 'pit', 'yaw', 'bat', 'volt', 'temp', 'updated'])
+      console.table(stats, ['timestamp', 'data'])
     }, 1000)
   }
 
   log(topic, message) {
     try {
-      const payload = JSON.parse(message.toString())
-      const imei = payload.IMEI
-      if (imei) {
-        const stream = this.getStream(imei)
-        stream.write(`[${new Date().toISOString()}] ${JSON.stringify(payload)}\n`)
+      const data = message.toString();
+      const payload = JSON.parse(data);
+      if (topic) {
+        const stream = this.getStream(topic.replace('/', '_'))
+        stream.write(`[${new Date().toLocaleString()}] ${JSON.stringify(payload)}\n`)
         payload['timestamp'] = new Date()
-        stats[imei] = payload
+        payload['data'] = data.slice(0, 100);
+        stats[topic] = payload;
       }
     } catch (error) {
       fs.appendFileSync('error.txt', `[${new Date().toISOString()}] ${topic}: ${message.toString()}\n`)
@@ -41,15 +42,15 @@ class TelemetryLogger {
     }
   }
 
-  getStream(imei) {
-    if (!this.streamMap.has(imei)) {
-      const filepath = path.join(this.baseDir, `${imei}.txt`)
+  getStream(key) {
+    if (!this.streamMap.has(key)) {
+      const filepath = path.join(this.baseDir, `${key}.txt`)
       console.info(`Creating ${filepath}`)
       this.streamMap.set(
-        imei, fs.createWriteStream(filepath, {flags: 'a'}),
+        key, fs.createWriteStream(filepath, {flags: 'a'}),
       )
     }
-    return this.streamMap.get(imei)
+    return this.streamMap.get(key)
   }
 }
 
