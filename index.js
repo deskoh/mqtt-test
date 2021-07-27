@@ -21,7 +21,10 @@ client.on('message', function (topic, message) {
 client.subscribe('#')
 
 console.log(`Connecting to ${host}`)
-client.on('connect', () => console.log('Connected!'))
+client.on('connect', () => {
+  console.log('Connected!')
+  // setInterval(() => client.publish('test', '{"hello": "world"}', 2000), 1000)
+})
 
 client.on('error', function (error) {
   console.log("Can't connect" + error)

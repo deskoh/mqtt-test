@@ -21,20 +21,22 @@ class TelemetryLogger {
         e.updated = moment(e.timestamp).fromNow()
       })
       console.clear()
-      console.table(stats, ['timestamp', 'data'])
+      console.table(stats, ['time', 'updated', 'data'])
     }, 1000)
   }
 
   log(topic, message) {
     try {
-      const data = message.toString();
-      const payload = JSON.parse(data);
+      const data = message.toString()
+      const payload = JSON.parse(data)
       if (topic) {
         const stream = this.getStream(topic.replace('/', '_'))
-        stream.write(`[${new Date().toLocaleString()}] ${JSON.stringify(payload)}\n`)
-        payload['timestamp'] = new Date()
-        payload['data'] = data.slice(0, 100);
-        stats[topic] = payload;
+        const now = new Date()
+        stream.write(`[${now.toLocaleString()}] ${JSON.stringify(payload)}\n`)
+        payload['timestamp'] = now
+        payload['time'] = now.toLocaleTimeString()
+        payload['data'] = data.slice(0, 100)
+        stats[topic] = payload
       }
     } catch (error) {
       fs.appendFileSync('error.txt', `[${new Date().toISOString()}] ${topic}: ${message.toString()}\n`)
